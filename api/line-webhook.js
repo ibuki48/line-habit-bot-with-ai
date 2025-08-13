@@ -1,26 +1,39 @@
-// ユーザーからメッセージが来たら「受け取りました！」と返す最小構成
+// キーワードに反応して /liff のURLを返信する版
 export default async function handler(req, res) {
-  // LINEのWebhookはPOSTで来る。GETで叩かれても200返すだけにしておく
+  // LINEのWebhookは基本POST。GETで叩かれても200を返すだけ
   if (req.method !== 'POST') return res.status(200).send('ok');
 
   const events = (req.body && req.body.events) || [];
 
-  // 複数イベントが来ることがあるので map で処理
+  // 受信したドメインからLIFFのURLを作成（VercelならOK）
+  const baseUrl = `https://${req.headers.host}`;
+  const liffUrl = `${baseUrl}/liff/`; // ← 末尾スラッシュ大事！
+
   await Promise.all(events.map(async (ev) => {
-    if (ev.type === 'message' && ev.replyToken) {
+    if (ev.type === 'message' && ev.message?.type === 'text' && ev.replyToken) {
+      const text = (ev.message.text || '').trim();
+
+      // 反応させたいキーワードをここに列挙
+      const triggers = ['チェックイン', 'checkin', '/liff', 'リフ', 'りふ'];
+      const wantsLiff = triggers.some(k => text.includes(k));
+
+      const messages = wantsLiff
+        ? [{ type: 'text', text: `今日のチェックインはこちら👇\n${liffUrl}` }]
+        : [{ type: 'text', text: '受け取りました！準備中です🙌' }];
+
       await fetch('https://api.line.me/v2/bot/message/reply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`, // ←後でVercelに入れる
+          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
         },
         body: JSON.stringify({
-          replyToken: ev.replyToken,               // 1分以内に使う必要あり
-          messages: [{ type: 'text', text: '受け取りました！準備中です🙌' }],
+          replyToken: ev.replyToken, // 1分以内に使用
+          messages
         }),
       });
     }
   }));
 
-  return res.status(200).end(); // すぐ200を返す（重い処理は将来キューへ）
+  return res.status(200).end();
 }
