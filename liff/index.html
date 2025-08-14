@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>1分チェックイン</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; margin: 16px; }
+    h1 { font-size: 1.8rem; margin-bottom: 12px; }
+    button { padding: .6rem .9rem; border: 0; border-radius: 9999px; margin-right: 8px; }
+    #hello { margin: 10px 0 16px; }
+  </style>
 </head>
 <body>
   <h1>今日のチェックイン</h1>
@@ -13,44 +19,43 @@
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
-    const LIFF_ID = '2007916846-QZqzAmjW';  // 例: '165xxxx-xxxxx'
-    async function init() {
+    const LIFF_ID = 'YOUR_LIFF_ID'; // ← ここをあなたのLIFF IDに
+
+    async function main() {
       await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) liff.login();
+      if (!liff.isLoggedIn()) { liff.login(); return; }
 
       const profile = await liff.getProfile();
-      <p id="uid"></p>
-<script>
-  // 既存の getProfile() の後で
-  document.getElementById('uid').textContent = `userId: ${profile.userId}`;
-  // すぐ見たいならポップアップでも
-  alert('あなたの userId: ' + profile.userId);
-</script>
+      document.getElementById('hello').textContent = `こんにちは、${profile.displayName} さん`;
 
-      document.getElementById('hello').textContent =
-        `こんにちは、${profile.displayName} さん`;
+      async function send(status) {
+        try {
+          await fetch('/api/checkin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: profile.userId,
+              status,
+              ts: new Date().toISOString()
+            })
+          });
+          alert('送信しました！');
+          if (liff.isInClient()) liff.closeWindow();
+        } catch (e) {
+          console.error(e);
+          alert('送信でエラーが起きました');
+        }
+      }
 
-      const send = async (status) => {
-        await fetch('/api/checkin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: profile.userId,
-            status,
-            ts: new Date().toISOString()
-          })
-        });
-        alert('送信しました！');
-        if (liff.isInClient()) liff.closeWindow();
-      };
-
-      document.getElementById('done').onclick = () => send('done');
-      document.getElementById('skip').onclick = () => send('skip');
+      document.getElementById('done').addEventListener('click', () => send('done'));
+      document.getElementById('skip').addEventListener('click', () => send('skip'));
     }
-    init().catch(e => {
+
+    main().catch(e => {
       console.error(e);
       document.getElementById('hello').textContent = 'エラーが起きました';
     });
   </script>
 </body>
 </html>
+
