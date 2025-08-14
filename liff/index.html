@@ -14,7 +14,6 @@
 <body>
   <h1>今日のチェックイン</h1>
   <p id="hello">読み込み中…</p>
-  <p id="uid" style="font-size:12px;color:#666;word-break:break-all;"></p>
 
   <button id="done">やった！</button>
   <button id="skip">今日はおやすみ</button>
@@ -28,11 +27,6 @@
       if (!liff.isLoggedIn()) { liff.login(); return; }
 
       const profile = await liff.getProfile();
-      const uid = profile.userId;
-document.getElementById('uid').textContent = `userId: ${uid}`;
-try { await navigator.clipboard.writeText(uid); } catch (_) {}
-// 必要ならアラートでも表示
-// alert('あなたの userId: ' + uid);
 
       document.getElementById('hello').textContent = `こんにちは、${profile.displayName} さん`;
 
