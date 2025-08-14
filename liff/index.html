@@ -19,6 +19,14 @@
       if (!liff.isLoggedIn()) liff.login();
 
       const profile = await liff.getProfile();
+      <p id="uid"></p>
+<script>
+  // 既存の getProfile() の後で
+  document.getElementById('uid').textContent = `userId: ${profile.userId}`;
+  // すぐ見たいならポップアップでも
+  alert('あなたの userId: ' + profile.userId);
+</script>
+
       document.getElementById('hello').textContent =
         `こんにちは、${profile.displayName} さん`;
 
