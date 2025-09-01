@@ -1,46 +1,59 @@
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script>
-  const LIFF_ID = "2007916846-QZqzAmjW"; // LIFFコンソールで発行されたIDに置き換え
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Habit Bot</title>
+    <!-- LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  </head>
 
-  async function main() {
-    await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+  <body>
+    <!-- 表示用 -->
+    <h1 id="hello">読み込み中...</h1>
 
-    const profile = await liff.getProfile();
-    document.getElementById("hello").textContent = `こんにちは、${profile.displayName} さん`;
+    <!-- 操作用ボタン -->
+    <button id="done">やった！</button>
+    <button id="skip">スキップ</button>
 
-    // 送信処理
-    async function send(status) {
-      try {
-        await fetch("https://script.google.com/macros/s/AKfycbwrwEN0RE9M6eC1BaCXjhwbR_vmu-oRKR502XuRtI4t9PRUQ73JL2fSbvK7f1nvIs--gg/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: profile.userId,
-            status: status,
-            ts: new Date().toISOString(),
-            source: "liff"
-          })
-        });
+    <!-- あなたのJavaScriptコード -->
+    <script>
+      const LIFF_ID = "2007916846-QZqzAmjW"; // あなたのLIFF ID
 
-        alert("送信しました！");
-        if (liff.isInClient()) liff.closeWindow();
-      } catch (e) {
-        console.error(e);
-        alert("送信でエラーが起きました");
+      async function main() {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+
+        const profile = await liff.getProfile();
+        document.getElementById("hello").textContent = `こんにちは、${profile.displayName} さん`;
       }
-    }
 
-    // ボタンにイベントを追加
-    document.getElementById("done").addEventListener("click", () => send("done"));
-    document.getElementById("skip").addEventListener("click", () => send("skip"));
-  }
+      async function send(status) {
+        try {
+          await fetch("https://script.google.com/macros/s/AKfycbwrwEN0RE9M6eC1BaCXjhwbR_vmu-oRKR502XuRtI4t9PRUQ73JL2fSbvK7f1nvIs--gg/exec", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: profile.userId,
+              status,
+              ts: new Date().toISOString(),
+              source: "liff"
+            })
+          });
+          alert("送信しました！");
+          if (liff.isInClient()) liff.closeWindow();
+        } catch (e) {
+          console.error(e);
+          alert("送信でエラーが起きました");
+        }
+      }
 
-  main().catch(e => {
-    console.error(e);
-    document.getElementById("hello").textContent = "エラーが起きました";
-  });
-</script>
+      document.getElementById("done").addEventListener("click", () => send("done"));
+      document.getElementById("skip").addEventListener("click", () => send("skip"));
+
+      main().catch(e => {
+        console.error(e);
+        document.getElementById("hello").textContent = "エラーが起きました";
+      });
+    </script>
+  </body>
+</html>
